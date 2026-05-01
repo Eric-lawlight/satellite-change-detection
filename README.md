@@ -13,7 +13,7 @@
 
 위성 영상 기반 건물 변화 감지(Change Detection) 모델을 구현하고 논문 수준의 성능을 재현하는 프로젝트입니다.
 
-스텔라비전 Vision AI 엔지니어 채용공고의 **"변화 감지(Change Detection) 모델 설계 및 최적화"** 요구사항에 맞춰,
+인공위성 관련 기업 Vision AI 엔지니어 지원자격의 **"변화 감지(Change Detection) 모델 설계 및 최적화"** 요구사항에 맞춰,
 LEVIR-CD 데이터셋으로 BIT(Binary change detection with Image Transformer) 모델을 학습하고 **F1 88.84%** 를 달성했습니다.
 
 ---
