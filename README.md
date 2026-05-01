@@ -145,12 +145,15 @@ python tools/make_list.py
 
 ### 학습
 ```bash
-python main_cd.py \
-    --img_size 256 \
-    --data_name LEVIR \
-    --net_G base_transformer_pos_s4_dd8 \
-    --max_epochs 200 \
-    --batch_size 8 \
+python main_cd.py ^
+    --data_name LEVIR ^
+    --dataset CDDataset ^
+    --checkpoint_root checkpoints ^
+    --project_name BIT_LEVIR_scratch ^
+    --net_G base_transformer_pos_s4_dd8_dedim8 ^
+    --batch_size 16 ^
+    --num_workers 2 ^
+    --max_epochs 200 ^
     --lr 0.01
 ```
 
