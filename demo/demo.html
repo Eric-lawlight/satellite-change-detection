@@ -241,30 +241,28 @@ function buildSceneList(){
   });
 }
 
-function autoPlace(idx){
-  if(!loadedA)dropScene(idx,'A');
-  else if(!loadedB&&idx!==loadedA.idx)dropScene(idx,'B');
-}
+function autoPlace(idx){ loadScene(idx); }
 
 function onDragOver(e,slot){e.preventDefault();document.getElementById('zone'+slot).classList.add('drag-over');}
 function onDragLeave(e,slot){document.getElementById('zone'+slot).classList.remove('drag-over');}
-function onDrop(e,slot){e.preventDefault();document.getElementById('zone'+slot).classList.remove('drag-over');const idx=parseInt(e.dataTransfer.getData('sceneIdx'));dropScene(idx,slot);}
+function onDrop(e,slot){e.preventDefault();document.getElementById('zone'+slot).classList.remove('drag-over');const idx=parseInt(e.dataTransfer.getData('sceneIdx'));loadScene(idx);}
 
-function dropScene(idx,slot){
+function loadScene(idx){
   const s=scenes[idx];
-  if(slot==='A'){
-    loadedA={idx,...s};
-    const el=document.getElementById('imgA');
-    el.style.backgroundImage=`url('${s.vis}')`;el.style.backgroundPosition='0% center';el.style.display='block';
-    document.getElementById('placeholderA').style.display='none';
-    document.getElementById('dateA').textContent=s.date_a;
-  }else{
-    loadedB={idx,...s};
-    const el=document.getElementById('imgB');
-    el.style.backgroundImage=`url('${s.vis}')`;el.style.backgroundPosition='33.33% center';el.style.display='block';
-    document.getElementById('placeholderB').style.display='none';
-    document.getElementById('dateB').textContent=s.date_b;
-  }
+  loadedA={idx,...s};loadedB={idx,...s};
+  const elA=document.getElementById('imgA');
+  elA.style.backgroundImage=`url('${s.vis}')`;elA.style.backgroundPosition='0% center';elA.style.display='block';
+  document.getElementById('placeholderA').style.display='none';
+  document.getElementById('dateA').textContent=s.date_a;
+  const elB=document.getElementById('imgB');
+  elB.style.backgroundImage=`url('${s.vis}')`;elB.style.backgroundPosition='33.33% center';elB.style.display='block';
+  document.getElementById('placeholderB').style.display='none';
+  document.getElementById('dateB').textContent=s.date_b;
+  document.getElementById('resultsBody').innerHTML=`<div class="result-empty"><div class="icon">📊</div><div>분석 준비 완료</div><div style="font-size:9px;margin-top:4px">▶ ANALYZE를 클릭하세요</div></div>`;
+  document.getElementById('resultStatus').textContent='READY';
+  document.getElementById('resultStatus').style.color='var(--text-dim)';
+  document.querySelectorAll('.scene-card').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.scene-card')[idx]?.classList.add('selected');
   updateBtn();
 }
 
