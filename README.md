@@ -19,6 +19,7 @@ LEVIR-CD 데이터셋으로 BIT(Binary change detection with Image Transformer) 
 
 👉 [**인터랙티브 데모 보기**](https://eric-lawlight.github.io/satellite-change-detection/demo/demo.html)
 
+![demo_preview](demo/demo_preview.jpg)
 ---
 
 ## 🖼️ 결과 시각화
