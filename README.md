@@ -58,6 +58,7 @@ LEVIR-CD 데이터셋으로 BIT(Binary change detection with Image Transformer) 
 | ChangeFormer-B2 | Open-CD | 16.38% | ❌ ignore_index 버그 |
 | **BIT (직접 학습)** | **BIT_CD** | **88.84%** | ✅ 목표 달성 |
 | BIT (저자 체크포인트) | BIT_CD | 89.94% | ✅ 논문 재현 |
+| BIT + AMP (batch=32) | 82.16% | 69.72% | 90.45% | 75.26% | ⚠️ 과적합 |
 
 ---
 
@@ -131,6 +132,7 @@ BIT_CD는 레이블을 직접 처리하므로 ignore_index 충돌 없음.
 PyTorch AMP(`autocast` + `GradScaler`) 적용으로 동일 하드웨어에서 처리량 약 3배 향상.
 CUDA 이용률은 두 설정 모두 90%로 동일 — GPU가 연산을 순식간에 끝내는 경량 모델 특성상
 이용률 % 수치보다 **imps(초당 처리량)** 가 실질적인 효율 지표임을 확인.
+단 batch size 증가로 일반화 성능 저하, 기존 batch=16이 최적 구성 확인.
 
 ---
 
