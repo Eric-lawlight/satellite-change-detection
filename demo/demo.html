@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SatelliteVision — Change Detection Platform</title>
+<title>SAT-CD — Change Detection Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -36,6 +36,62 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);display
 /* LAYOUT */
 .workspace{display:grid;grid-template-columns:240px 1fr 280px;flex:1;overflow:hidden;}
 
+/* MOBILE */
+@media(max-width:768px){
+  html,body{overflow:auto;height:auto;}
+  .workspace{display:flex;flex-direction:column;overflow:visible;flex:none;}
+
+  /* 사이드바 */
+  .sidebar{border-right:none;border-bottom:1px solid var(--border);height:auto;flex:none;}
+  .scene-list{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;padding:8px;gap:8px;-webkit-overflow-scrolling:touch;}
+  .scene-list::-webkit-scrollbar{height:3px;}
+  .scene-card{min-width:100px!important;max-width:100px!important;width:100px!important;flex-shrink:0!important;}
+  .scene-thumb{height:100px!important;width:100px!important;}
+
+  /* 드롭존 — padding-top으로 1:1 강제 */
+  .analysis-area{overflow:visible;flex:none;}
+  .drop-zones{height:auto!important;}
+  .drop-zone{height:auto!important;overflow:hidden!important;}
+  .zone-header{flex-shrink:0!important;}
+  .zone-img-wrap{
+    position:relative!important;
+    width:100%!important;
+    height:0!important;
+    padding-top:100%!important;
+    flex:none!important;
+    overflow:hidden!important;
+  }
+  .zone-placeholder{
+    position:absolute!important;
+    inset:0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important;
+    align-items:center!important;
+    text-align:center!important;
+  }
+  .zone-loaded-img{
+    position:absolute!important;
+    top:0!important;left:0!important;
+    width:100%!important;
+    height:100%!important;
+    background-size:400% auto!important;
+    display:block!important;
+  }
+
+  /* 결과 패널 */
+  .results-panel{border-left:none;border-top:1px solid var(--border);min-height:300px;flex:none;}
+  .results-body{overflow:visible;}
+
+  /* 상단 */
+  .topbar-nav{display:none;}
+  .topbar-right span:first-child{display:none;}
+
+  /* 하단 바 */
+  .bottom-bar{height:auto;padding:10px 14px;flex-wrap:wrap;gap:8px;}
+  .analyze-btn{font-size:13px;padding:8px 20px;}
+}
+
 /* SIDEBAR */
 .sidebar{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
 .sidebar-header{padding:12px 14px;border-bottom:1px solid var(--border);font-family:var(--font-ui);font-size:10px;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;}
@@ -44,7 +100,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);display
 .scene-list::-webkit-scrollbar{width:4px;}
 .scene-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 
-.scene-card{background:var(--surface);border:1px solid var(--border);border-radius:3px;cursor:pointer;transition:all .2s;overflow:hidden;user-select:none;}
+.scene-card{background:var(--surface);border:1px solid var(--border);border-radius:3px;cursor:pointer;transition:all .2s;overflow:visible;user-select:none;}
 .scene-card:hover{border-color:var(--accent);background:var(--surface2);}
 .scene-card.dragging{opacity:.5;transform:scale(.96);}
 .scene-thumb{height:52px;width:100%;overflow:hidden;position:relative;background:#000;}
@@ -55,9 +111,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);display
 .badge-tn{background:rgba(0,200,240,.85);color:#000;}
 .badge-fp{background:rgba(240,160,0,.85);color:#000;}
 .badge-fn{background:rgba(240,48,80,.85);color:#000;}
-.scene-meta{padding:5px 8px;}
+.scene-meta{padding:8px 8px 10px;}
 .scene-id{font-family:var(--font-ui);font-size:10px;color:var(--text-bright);display:block;}
-.scene-date{font-family:var(--font-ui);font-size:9px;color:var(--text-dim);margin-top:1px;}
+.scene-date{font-family:var(--font-ui);font-size:9px;color:var(--text-dim);margin-top:2px;line-height:1.5;}
 
 /* ANALYSIS CENTER */
 .analysis-area{display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
@@ -140,7 +196,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);display
 <body>
 
 <div class="topbar">
-  <div class="logo"><div class="logo-dot"></div>STELLARVISION</div>
+  <div class="logo"><div class="logo-dot"></div><span style="white-space:nowrap">SAT-CD</span></div>
   <button class="nav-btn active">CHANGE DETECTION</button>
   <button class="nav-btn">ARCHIVE</button>
   <button class="nav-btn">ANALYTICS</button>
@@ -277,7 +333,7 @@ function updateBtn(){
 function clearAll(){
   loadedA=null;loadedB=null;
   ['A','B'].forEach(s=>{
-    document.getElementById('img'+s).style.display='none';
+    document.getElementById('img'+s).style.display='none';document.getElementById('img'+s).style.backgroundImage='';
     document.getElementById('placeholder'+s).style.display='flex';
     document.getElementById('date'+s).textContent='—';
     document.getElementById('scan'+s).style.display='none';
