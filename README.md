@@ -16,6 +16,8 @@
 인공위성 관련 기업 Vision AI 엔지니어 지원자격의 **"변화 감지(Change Detection) 모델 설계 및 최적화"** 요구사항에 맞춰,
 LEVIR-CD 데이터셋으로 BIT(Binary change detection with Image Transformer) 모델을 학습하고 **F1 88.84%** 를 달성했습니다.
 
+👉 [**인터랙티브 데모 보기**](demo/demo.html)
+
 ---
 
 ## 🖼️ 결과 시각화
