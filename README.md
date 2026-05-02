@@ -54,6 +54,7 @@ LEVIR-CD 데이터셋으로 BIT(Binary change detection with Image Transformer) 
 | **직접 학습 (200 epoch)** | **88.84%** | **79.92%** | 89.35% | 88.34% | 98.87% |
 | 논문 저자 체크포인트 | 89.94% | 81.72% | 90.33% | 89.56% | 98.98% |
 | 논문 기준 (BIT) | 90.5% | - | - | - | - |
+| BIT + AMP (batch=32) | 82.16% | 69.72% | 90.45% | 75.26% | ⚠️ 과적합 |
 
 ### 프레임워크 비교 실험
 
@@ -63,7 +64,7 @@ LEVIR-CD 데이터셋으로 BIT(Binary change detection with Image Transformer) 
 | ChangeFormer-B2 | Open-CD | 16.38% | ❌ ignore_index 버그 |
 | **BIT (직접 학습)** | **BIT_CD** | **88.84%** | ✅ 목표 달성 |
 | BIT (저자 체크포인트) | BIT_CD | 89.94% | ✅ 논문 재현 |
-| BIT + AMP (batch=32) | 82.16% | 69.72% | 90.45% | 75.26% | ⚠️ 과적합 |
+| BIT + AMP (batch=32) | BIT_CD | 82.16% | ⚠️ 과적합 |
 
 ---
 
