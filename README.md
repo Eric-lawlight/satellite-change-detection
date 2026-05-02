@@ -92,20 +92,14 @@ BIT_CD는 레이블을 직접 처리하므로 ignore_index 충돌 없음.
 
 ## 🏗️ 모델 구조 — BIT (Binary change detection with Image Transformer)
 
-```
-Image_A (Before) ──┐
-                   ├─→ [ResNet-18 Encoder] ─→ Feature_A
-Image_B (After)  ──┘                       ─→ Feature_B
+![Architecture](docs/BIT_model_architecture.svg)
 
-Feature_A, Feature_B ─→ [Transformer] ─→ Context-rich Features
-
-                    ─→ [MLP Decoder]  ─→ Change Map (256×256)
-```
-
-- **Backbone**: ResNet-18 (ImageNet pretrained)
-- **Neck**: Transformer (self-attention으로 시공간 관계 학습)
-- **Head**: MLP Decoder
+- **Backbone**: ResNet-18 (ImageNet pretrained, Siamese — 가중치 공유)
+- **Neck**: Transformer 8 layers (Self-Attention → Cross-Attention → FFN)
+- **Head**: MLP Decoder — Conv(32ch) → ReLU → Conv(2ch) → Upsample
 - **Loss**: Binary Cross Entropy
+- **입력**: 256×256 RGB 이미지 쌍 (Before / After)
+- **출력**: 256×256 변화 감지 마스크 (2클래스: unchanged / changed)
 
 ---
 
@@ -121,6 +115,52 @@ Feature_A, Feature_B ─→ [Transformer] ─→ Context-rich Features
 | 199 | 94.14% |
 
 총 학습 시간: 약 10시간 (RTX 2070 Super, Windows 10)
+
+---
+
+## ⚡ 학습 최적화 실험 — AMP (Automatic Mixed Precision)
+
+### Baseline vs FP16 비교
+
+| 설정 | 처리속도 | 에포크당 배치 | 학습시간 |
+|------|---------|------------|---------|
+| FP32, batch=16 | 600 img/s | 445 | ~10시간 |
+| **FP16, batch=32** | **1,750 img/s** | **223** | **~7시간** |
+| 개선율 | **+192%** | 절반 | **-30%** |
+
+PyTorch AMP(`autocast` + `GradScaler`) 적용으로 동일 하드웨어에서 처리량 약 3배 향상.
+CUDA 이용률은 두 설정 모두 90%로 동일 — GPU가 연산을 순식간에 끝내는 경량 모델 특성상
+이용률 % 수치보다 **imps(초당 처리량)** 가 실질적인 효율 지표임을 확인.
+
+---
+
+## 🔬 프로파일링 분석
+
+### py-spy — Python 레벨 병목 분석
+
+| 함수 | 비율 | 의미 |
+|------|------|------|
+| `scaler.step` (optimizer) | 51.8% | AMP 옵티마이저 스텝 |
+| `_backward_G` (역전파) | 31.7% | Loss 역전파 |
+| `_forward_pass` (순전파) | 12.3% | 모델 추론 |
+| DataLoader | ~0% | **병목 없음** ✅ |
+
+→ 학습 시간의 83%가 GPU 연산, DataLoader 병목 없음 확인.  
+→ 추가 최적화는 모델 경량화 또는 하드웨어 업그레이드가 유효.
+
+### NVIDIA Nsight Systems — GPU 커널 레벨 분석
+
+![Nsight Systems](docs/nsight_profile.jpg)
+
+| 관찰 항목 | 결과 |
+|----------|------|
+| CUDA HW 점유율 | 학습 구간 거의 풀가동 ✅ |
+| cuBLAS 패턴 | 규칙적 반복 (Transformer attention 정상) |
+| GPU 유휴 구간 | validation 전환 시점에만 발생 |
+| DataLoader 워커 | num_workers=4 정상 동작 확인 |
+
+→ py-spy + Nsight 두 도구로 병목이 DataLoader가 아닌 GPU 연산 자체임을 정량적으로 검증.  
+→ AMP + batch=32 + num_workers=4 설정이 해당 하드웨어에서 최적 구성임을 확인.
 
 ---
 

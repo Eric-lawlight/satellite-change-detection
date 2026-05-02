@@ -1,0 +1,210 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 426" width="100%">
+
+<!-- Dark background matching Netron dark theme -->
+<rect fill="rgb(55,55,55)" width="760" height="426"/>
+
+<defs>
+  <!-- Red arrowhead — used for input edges (matches Netron dark mode) -->
+  <marker id="ah-red" viewBox="0 0 10 10" refX="9" refY="5"
+          markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"
+          style="fill:rgb(190,60,60)">
+    <path d="M 0 0 L 10 5 L 0 10 L 4 5 z" style="stroke-width:1"/>
+  </marker>
+  <!-- Gray arrowhead — used for all internal edges -->
+  <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5"
+          markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"
+          style="fill:rgb(140,140,140)">
+    <path d="M 0 0 L 10 5 L 0 10 L 4 5 z" style="stroke-width:1"/>
+  </marker>
+
+  <!-- Header clip paths: clips bottom rounded corners → straight bottom edge on headers -->
+  <clipPath id="cp-resnet"><rect x="50"  y="96"  width="660" height="21"/></clipPath>
+  <clipPath id="cp-sem">   <rect x="68"  y="196" width="168" height="20"/></clipPath>
+  <clipPath id="cp-self">  <rect x="292" y="196" width="162" height="20"/></clipPath>
+  <clipPath id="cp-cross"> <rect x="508" y="196" width="168" height="20"/></clipPath>
+  <clipPath id="cp-mlp">   <rect x="148" y="300" width="464" height="21"/></clipPath>
+</defs>
+
+
+<!-- ═══════════════════════════════════════════════════
+     INPUT NODES  (dark gray pill, separator line)
+     ═══════════════════════════════════════════════════ -->
+
+<!-- image_A -->
+<rect x="50" y="20" width="170" height="36" rx="5"
+      fill="rgb(45,45,45)" stroke="rgb(100,100,100)" stroke-width="1"/>
+<line x1="50" y1="38" x2="220" y2="38" stroke="rgb(82,82,82)" stroke-width="0.5"/>
+<text x="135" y="30" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="11" fill="rgb(220,220,220)">image_A</text>
+<text x="135" y="49" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="9" fill="rgb(155,155,155)">float32[1,3,256,256]</text>
+
+<!-- image_B -->
+<rect x="540" y="20" width="170" height="36" rx="5"
+      fill="rgb(45,45,45)" stroke="rgb(100,100,100)" stroke-width="1"/>
+<line x1="540" y1="38" x2="710" y2="38" stroke="rgb(82,82,82)" stroke-width="0.5"/>
+<text x="625" y="30" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="11" fill="rgb(220,220,220)">image_B</text>
+<text x="625" y="49" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="9" fill="rgb(155,155,155)">float32[1,3,256,256]</text>
+
+
+<!-- ═══════════════════════════════════════════════════
+     RED ARROWS: inputs → ResNet  (Netron dark: red input edges)
+     ═══════════════════════════════════════════════════ -->
+<path d="M135,56 C135,76 380,76 380,96"
+      stroke="rgb(190,60,60)" stroke-width="1" fill="none" marker-end="url(#ah-red)"/>
+<path d="M625,56 C625,76 380,76 380,96"
+      stroke="rgb(190,60,60)" stroke-width="1" fill="none" marker-end="url(#ah-red)"/>
+
+
+<!-- ═══════════════════════════════════════════════════
+     RESNET-18 ENCODER  (blue header = Conv-type layer)
+     ═══════════════════════════════════════════════════ -->
+<!-- Dark body base -->
+<rect x="50" y="96" width="660" height="52" rx="5" fill="rgb(45,45,45)" stroke="none"/>
+<!-- Blue header (clipped to flat bottom) -->
+<rect x="50" y="96" width="660" height="21" rx="5"
+      fill="rgb(51,85,136)" clip-path="url(#cp-resnet)"/>
+<!-- Border -->
+<rect x="50" y="96" width="660" height="52" rx="5"
+      fill="none" stroke="rgb(100,100,100)" stroke-width="1"/>
+<!-- Texts -->
+<text x="380" y="107" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="11" fill="rgb(255,255,255)">ResNet-18 Encoder (Siamese — 가중치 공유)</text>
+<text x="380" y="127" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="9" fill="rgb(185,185,185)">Conv → BN → ReLU × 4 stages</text>
+<text x="380" y="139" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="9" fill="rgb(185,185,185)">float32[1,512,8,8] per image</text>
+
+
+<!-- ═══════════════════════════════════════════════════
+     GRAY ARROW: ResNet → Semantic Tokens (enters Transformer)
+     ═══════════════════════════════════════════════════ -->
+<path d="M380,148 C380,172 152,172 152,196"
+      stroke="rgb(140,140,140)" stroke-width="1" fill="none" marker-end="url(#ah)"/>
+
+
+<!-- ═══════════════════════════════════════════════════
+     TRANSFORMER CONTAINER  (dashed wrapper box)
+     ═══════════════════════════════════════════════════ -->
+<rect x="50" y="174" width="660" height="96" rx="5"
+      fill="none" stroke="rgb(100,100,100)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="380" y="186" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="9" fill="rgb(118,118,118)">Transformer Encoder (×4 layers, 8 heads)</text>
+
+
+<!-- ─── Semantic Tokens node ─── -->
+<rect x="68" y="196" width="168" height="46" rx="5" fill="rgb(45,45,45)" stroke="none"/>
+<rect x="68" y="196" width="168" height="20" rx="5"
+      fill="rgb(80,80,76)" clip-path="url(#cp-sem)"/>
+<rect x="68" y="196" width="168" height="46" rx="5"
+      fill="none" stroke="rgb(100,100,100)" stroke-width="1"/>
+<text x="152" y="207" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="11" fill="rgb(255,255,255)">Semantic Tokens</text>
+<text x="152" y="223" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="9" fill="rgb(185,185,185)">4 learnable tokens</text>
+<text x="152" y="234" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="9" fill="rgb(185,185,185)">float32[4,512]</text>
+
+<!-- Arrow: Semantic Tokens → Self-Attention -->
+<line x1="236" y1="219" x2="290" y2="219"
+      stroke="rgb(140,140,140)" stroke-width="1" marker-end="url(#ah)"/>
+
+
+<!-- ─── Self-Attention node ─── -->
+<rect x="292" y="196" width="162" height="46" rx="5" fill="rgb(45,45,45)" stroke="none"/>
+<rect x="292" y="196" width="162" height="20" rx="5"
+      fill="rgb(80,80,76)" clip-path="url(#cp-self)"/>
+<rect x="292" y="196" width="162" height="46" rx="5"
+      fill="none" stroke="rgb(100,100,100)" stroke-width="1"/>
+<text x="373" y="207" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="11" fill="rgb(255,255,255)">Self-Attention</text>
+<text x="373" y="223" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="9" fill="rgb(185,185,185)">MatMul → Softmax</text>
+<text x="373" y="234" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="9" fill="rgb(185,185,185)">8 heads, dim=512</text>
+
+<!-- Arrow: Self-Attention → Cross-Attention -->
+<line x1="454" y1="219" x2="506" y2="219"
+      stroke="rgb(140,140,140)" stroke-width="1" marker-end="url(#ah)"/>
+
+
+<!-- ─── Cross-Attention node ─── -->
+<rect x="508" y="196" width="168" height="46" rx="5" fill="rgb(45,45,45)" stroke="none"/>
+<rect x="508" y="196" width="168" height="20" rx="5"
+      fill="rgb(80,80,76)" clip-path="url(#cp-cross)"/>
+<rect x="508" y="196" width="168" height="46" rx="5"
+      fill="none" stroke="rgb(100,100,100)" stroke-width="1"/>
+<text x="592" y="207" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="11" fill="rgb(255,255,255)">Cross-Attention</text>
+<text x="592" y="223" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="9" fill="rgb(185,185,185)">A ↔ B feature fusion</text>
+<text x="592" y="234" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="9" fill="rgb(185,185,185)">float32[1,68,512]</text>
+
+
+<!-- ═══════════════════════════════════════════════════
+     GRAY ARROW: Cross-Attention → MLP (exits Transformer)
+     ═══════════════════════════════════════════════════ -->
+<path d="M592,242 C592,268 380,268 380,300"
+      stroke="rgb(140,140,140)" stroke-width="1" fill="none" marker-end="url(#ah)"/>
+
+
+<!-- ═══════════════════════════════════════════════════
+     MLP DECODER  (dark-red header = activation/ReLU type)
+     ═══════════════════════════════════════════════════ -->
+<rect x="148" y="300" width="464" height="52" rx="5" fill="rgb(45,45,45)" stroke="none"/>
+<rect x="148" y="300" width="464" height="21" rx="5"
+      fill="rgb(112,41,33)" clip-path="url(#cp-mlp)"/>
+<rect x="148" y="300" width="464" height="52" rx="5"
+      fill="none" stroke="rgb(100,100,100)" stroke-width="1"/>
+<text x="380" y="311" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="11" fill="rgb(255,255,255)">MLP Decoder (classifier)</text>
+<text x="380" y="331" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="9" fill="rgb(185,185,185)">Conv(32ch) → ReLU → Conv(2ch)</text>
+<text x="380" y="343" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="9" fill="rgb(185,185,185)">→ Upsample ×32 → float32[1,2,256,256]</text>
+
+
+<!-- ═══════════════════════════════════════════════════
+     GRAY ARROW: MLP → Output
+     ═══════════════════════════════════════════════════ -->
+<line x1="380" y1="352" x2="380" y2="376"
+      stroke="rgb(140,140,140)" stroke-width="1" marker-end="url(#ah)"/>
+
+
+<!-- ═══════════════════════════════════════════════════
+     OUTPUT NODE  (dark gray pill with separator)
+     ═══════════════════════════════════════════════════ -->
+<rect x="213" y="378" width="334" height="36" rx="5"
+      fill="rgb(45,45,45)" stroke="rgb(100,100,100)" stroke-width="1"/>
+<line x1="213" y1="396" x2="547" y2="396" stroke="rgb(82,82,82)" stroke-width="0.5"/>
+<text x="380" y="388" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="11" fill="rgb(220,220,220)">change_map</text>
+<text x="380" y="407" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe WPC','Segoe UI',Ubuntu,'Droid Sans',sans-serif"
+      font-size="9" fill="rgb(155,155,155)">float32[1,2,256,256] — unchanged / changed</text>
+
+</svg>
