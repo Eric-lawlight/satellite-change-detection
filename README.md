@@ -219,14 +219,17 @@ satellite-change-detection/
 ├── configs/
 │   ├── changeformer_mit-b1.py       # 실험1 config
 │   ├── changeformer_mit-b2.py       # 실험2 config
-│   └── bit_levir.json       # BIT-CD학습 config
+│   └── bit_levir.json               # BIT-CD 학습 config
 ├── tools/
 │   ├── crop_dataset.py              # 1024→256 패치 변환
 │   ├── make_list.py                 # 학습/검증/테스트 목록 생성
 │   ├── fix_labels.py                # 레이블 전처리 (0/255→0/1)
 │   └── visualize_results.py         # 결과 시각화
+├── docs/
+│   ├── BIT_model_architecture.svg   # 모델 구조 다이어그램
+│   └── nsight_profile.jpg           # Nsight Systems 프로파일링 결과
 └── results/
-      └── visualizations/              # Before/After/Mask 이미지
+    └── visualizations/              # Before/After/Mask 이미지
 
 ```
 
