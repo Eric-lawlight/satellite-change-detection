@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satellite Change Detection Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050a0f;
+    --surface: #0a1520;
+    --surface2: #0f1f30;
+    --border: #1a3a55;
+    --accent: #00d4ff;
+    --accent2: #00ff88;
+    --warn: #ffaa00;
+    --danger: #ff4455;
+    --text: #c8dde8;
+    --text-dim: #5a7a8a;
+    --font-head: 'Rajdhani', sans-serif;
+    --font-body: 'Noto Sans KR', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* HEADER */
+  header {
+    padding: 48px 0 32px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 2px;
+    padding: 4px 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .header-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-family: var(--font-head);
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 700;
+    letter-spacing: 2px;
+    line-height: 1.1;
+    color: #fff;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--text-dim);
+    font-weight: 300;
+    letter-spacing: 1px;
+  }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin: 28px 0;
+    overflow: hidden;
+  }
+
+  .stat {
+    background: var(--surface);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    font-family: var(--font-head);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--accent2);
+    letter-spacing: 1px;
+  }
+
+  .stat-value.warn { color: var(--warn); }
+  .stat-value.accent { color: var(--accent); }
+
+  /* FILTER TABS */
+  .filter-section {
+    margin: 32px 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .filter-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .filter-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 6px 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .filter-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: 600;
+  }
+
+  .filter-btn.tp.active { background: var(--accent2); border-color: var(--accent2); }
+  .filter-btn.tn.active { background: var(--accent); border-color: var(--accent); }
+  .filter-btn.fp.active { background: var(--warn); border-color: var(--warn); }
+  .filter-btn.fn.active { background: var(--danger); border-color: var(--danger); }
+
+  /* GALLERY */
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 2px;
+    margin-bottom: 60px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+  }
+
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,212,255,0.1);
+    z-index: 2;
+  }
+
+  .card.hidden { display: none; }
+
+  .card-tag {
+    position: absolute;
+    top: 10px; left: 10px;
+    z-index: 3;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+
+  .tag-tp { background: rgba(0,255,136,0.9); color: #000; }
+  .tag-tn { background: rgba(0,212,255,0.9); color: #000; }
+  .tag-fp { background: rgba(255,170,0,0.9); color: #000; }
+  .tag-fn { background: rgba(255,68,85,0.9); color: #000; }
+
+  .card img {
+    width: 100%;
+    display: block;
+    transition: transform 0.3s;
+  }
+
+  .card:hover img { transform: scale(1.01); }
+
+  .card-info {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+  }
+
+  .card-name {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .card-desc {
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 300;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    backdrop-filter: blur(8px);
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    max-width: 900px;
+    width: 100%;
+    overflow: hidden;
+    transform: scale(0.95);
+    transition: transform 0.3s;
+  }
+
+  .modal-overlay.open .modal { transform: scale(1); }
+
+  .modal img { width: 100%; display: block; }
+
+  .modal-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .modal-title {
+    font-family: var(--font-head);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  .modal-close {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+
+  .modal-close:hover { border-color: var(--danger); color: var(--danger); }
+
+  .modal-body { padding: 16px 20px; }
+
+  .modal-meta {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .modal-meta span { color: var(--text); }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+  }
+
+  /* PANEL LABELS */
+  .panel-labels {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-bottom: none;
+  }
+
+  .panel-label {
+    background: var(--surface2);
+    padding: 6px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 0;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* COUNT badge */
+  .count-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 2px 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    margin-left: auto;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="header-badge">BIT · LEVIR-CD · Change Detection</div>
+    <h1>🛰️ Satellite <span>Change</span> Detection</h1>
+    <div class="subtitle">Binary Image Transformer (BIT) · Test Set Visualization · F1 88.84%</div>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-label">Changed F1</span>
+      <span class="stat-value">88.84%</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">IoU</span>
+      <span class="stat-value">79.92%</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Precision</span>
+      <span class="stat-value accent">89.35%</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Recall</span>
+      <span class="stat-value accent">88.34%</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Overall Acc</span>
+      <span class="stat-value">98.87%</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Dataset</span>
+      <span class="stat-value warn" style="font-size:18px">LEVIR-CD</span>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div> TP — 변화 정확 감지</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> TN — 변화 없음 정확 판별</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--warn)"></div> FP — 오탐 (없는 변화 예측)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--danger)"></div> FN — 미탐 (있는 변화 놓침)</div>
+    <div class="legend-item" style="margin-left:auto; color: var(--text-dim); font-family: var(--font-mono); font-size:11px">각 이미지: Before(A) / After(B) / GT Mask / Pred Mask</div>
+  </div>
+
+  <div class="filter-section">
+    <span class="filter-label">FILTER:</span>
+    <button class="filter-btn active" onclick="filterCards('all', this)">ALL</button>
+    <button class="filter-btn tp" onclick="filterCards('tp', this)">✅ TP</button>
+    <button class="filter-btn tn" onclick="filterCards('tn', this)">🔵 TN</button>
+    <button class="filter-btn fp" onclick="filterCards('fp', this)">⚠️ FP</button>
+    <button class="filter-btn fn" onclick="filterCards('fn', this)">❌ FN</button>
+    <span class="count-badge" id="count">20 samples</span>
+  </div>
+
+  <div class="gallery" id="gallery">
+
+    <div class="card" data-type="tp" onclick="openModal(this)">
+      <span class="card-tag tag-tp">TP</span>
+      <img src="test_126_512_0_vis.jpg" alt="test_126">
+      <div class="card-info">
+        <span class="card-name">test_126_512_0</span>
+        <span class="card-desc">단일 건물 신축 정확 감지</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="fp" onclick="openModal(this)">
+      <span class="card-tag tag-fp">FP</span>
+      <img src="test_2_768_512_vis.jpg" alt="test_2">
+      <div class="card-info">
+        <span class="card-name">test_2_768_512</span>
+        <span class="card-desc">미세 오탐 — 클래스 불균형 FP</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="fn" onclick="openModal(this)">
+      <span class="card-tag tag-fn">FN</span>
+      <img src="test_16_512_768_vis.jpg" alt="test_16">
+      <div class="card-info">
+        <span class="card-name">test_16_512_768</span>
+        <span class="card-desc">미탐 — 건물 변화 놓침</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tp" onclick="openModal(this)">
+      <span class="card-tag tag-tp">TP</span>
+      <img src="test_34_768_768_vis.jpg" alt="test_34">
+      <div class="card-info">
+        <span class="card-name">test_34_768_768</span>
+        <span class="card-desc">대규모 신축 단지 전체 감지</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tp" onclick="openModal(this)">
+      <span class="card-tag tag-tp">TP</span>
+      <img src="test_35_256_512_vis.jpg" alt="test_35">
+      <div class="card-info">
+        <span class="card-name">test_35_256_512</span>
+        <span class="card-desc">복수 건물 패턴 정확 감지</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tn" onclick="openModal(this)">
+      <span class="card-tag tag-tn">TN</span>
+      <img src="test_36_0_512_vis.jpg" alt="test_36">
+      <div class="card-info">
+        <span class="card-name">test_36_0_512</span>
+        <span class="card-desc">변화 없음 정확 판별</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="fn" onclick="openModal(this)">
+      <span class="card-tag tag-fn">FN</span>
+      <img src="test_38_512_0_vis.jpg" alt="test_38">
+      <div class="card-info">
+        <span class="card-name">test_38_512_0</span>
+        <span class="card-desc">일부 변화 미탐</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tn" onclick="openModal(this)">
+      <span class="card-tag tag-tn">TN</span>
+      <img src="test_40_512_768_vis.jpg" alt="test_40">
+      <div class="card-info">
+        <span class="card-name">test_40_512_768</span>
+        <span class="card-desc">변화 없음 정확 판별</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tn" onclick="openModal(this)">
+      <span class="card-tag tag-tn">TN</span>
+      <img src="test_48_256_512_vis.jpg" alt="test_48">
+      <div class="card-info">
+        <span class="card-name">test_48_256_512</span>
+        <span class="card-desc">도시 구역 변화 없음</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tp" onclick="openModal(this)">
+      <span class="card-tag tag-tp">TP</span>
+      <img src="test_49_0_768_vis.jpg" alt="test_49">
+      <div class="card-info">
+        <span class="card-name">test_49_0_768</span>
+        <span class="card-desc">신규 건물군 감지</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tn" onclick="openModal(this)">
+      <span class="card-tag tag-tn">TN</span>
+      <img src="test_81_256_512_vis.jpg" alt="test_81">
+      <div class="card-info">
+        <span class="card-name">test_81_256_512</span>
+        <span class="card-desc">산림 지역 변화 없음</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tn" onclick="openModal(this)">
+      <span class="card-tag tag-tn">TN</span>
+      <img src="test_82_0_0_vis.jpg" alt="test_82">
+      <div class="card-info">
+        <span class="card-name">test_82_0_0</span>
+        <span class="card-desc">도로·산림 변화 없음</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tn" onclick="openModal(this)">
+      <span class="card-tag tag-tn">TN</span>
+      <img src="test_88_768_768_vis.jpg" alt="test_88">
+      <div class="card-info">
+        <span class="card-name">test_88_768_768</span>
+        <span class="card-desc">초지 변화 없음</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tn" onclick="openModal(this)">
+      <span class="card-tag tag-tn">TN</span>
+      <img src="test_106_256_512_vis.jpg" alt="test_106a">
+      <div class="card-info">
+        <span class="card-name">test_106_256_512</span>
+        <span class="card-desc">도로 구역 변화 없음</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tn" onclick="openModal(this)">
+      <span class="card-tag tag-tn">TN</span>
+      <img src="test_106_768_0_vis.jpg" alt="test_106b">
+      <div class="card-info">
+        <span class="card-name">test_106_768_0</span>
+        <span class="card-desc">농지 변화 없음</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tp" onclick="openModal(this)">
+      <span class="card-tag tag-tp">TP</span>
+      <img src="test_107_512_512_vis.jpg" alt="test_107">
+      <div class="card-info">
+        <span class="card-name">test_107_512_512</span>
+        <span class="card-desc">단일 건물 신축 정확 감지</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tn" onclick="openModal(this)">
+      <span class="card-tag tag-tn">TN</span>
+      <img src="test_108_0_512_vis.jpg" alt="test_108">
+      <div class="card-info">
+        <span class="card-name">test_108_0_512</span>
+        <span class="card-desc">산림 지역 변화 없음</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tn" onclick="openModal(this)">
+      <span class="card-tag tag-tn">TN</span>
+      <img src="test_120_256_0_vis.jpg" alt="test_120">
+      <div class="card-info">
+        <span class="card-name">test_120_256_0</span>
+        <span class="card-desc">농경지 변화 없음</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tn" onclick="openModal(this)">
+      <span class="card-tag tag-tn">TN</span>
+      <img src="test_121_768_768_vis.jpg" alt="test_121">
+      <div class="card-info">
+        <span class="card-name">test_121_768_768</span>
+        <span class="card-desc">농경지 변화 없음</span>
+      </div>
+    </div>
+
+    <div class="card" data-type="tn" onclick="openModal(this)">
+      <span class="card-tag tag-tn">TN</span>
+      <img src="test_124_0_768_vis.jpg" alt="test_124">
+      <div class="card-info">
+        <span class="card-name">test_124_0_768</span>
+        <span class="card-desc">초지 변화 없음</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Sample</span>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="panel-labels">
+      <div class="panel-label">Before (A)</div>
+      <div class="panel-label">After (B)</div>
+      <div class="panel-label">GT Mask</div>
+      <div class="panel-label">Pred Mask</div>
+    </div>
+    <img id="modalImg" src="" alt="">
+    <div class="modal-body">
+      <div class="modal-meta" id="modalMeta"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <a href="https://github.com/Eric-lawlight/satellite-change-detection" target="_blank">GitHub Repository</a>
+    &nbsp;·&nbsp; BIT: Remote Sensing Image Change Detection with Transformers (IEEE TGRS 2021)
+    &nbsp;·&nbsp; Dataset: LEVIR-CD
+  </div>
+</footer>
+
+<script>
+const typeInfo = {
+  tp: { label: 'True Positive', color: '#00ff88', desc: '변화 픽셀을 정확히 감지한 케이스' },
+  tn: { label: 'True Negative', color: '#00d4ff', desc: '변화 없음을 정확히 판별한 케이스' },
+  fp: { label: 'False Positive', color: '#ffaa00', desc: '변화가 없는데 있다고 예측한 오탐 케이스' },
+  fn: { label: 'False Negative', color: '#ff4455', desc: '변화가 있는데 놓친 미탐 케이스' },
+};
+
+function filterCards(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const cards = document.querySelectorAll('.card');
+  let count = 0;
+  cards.forEach(card => {
+    if (type === 'all' || card.dataset.type === type) {
+      card.classList.remove('hidden');
+      count++;
+    } else {
+      card.classList.add('hidden');
+    }
+  });
+  document.getElementById('count').textContent = count + ' samples';
+}
+
+function openModal(card) {
+  const img = card.querySelector('img');
+  const type = card.dataset.type;
+  const name = card.querySelector('.card-name').textContent;
+  const desc = card.querySelector('.card-desc').textContent;
+  const info = typeInfo[type];
+
+  document.getElementById('modalImg').src = img.src;
+  document.getElementById('modalTitle').textContent = name;
+  document.getElementById('modalMeta').innerHTML = `
+    <span style="color:${info.color}">[${info.label}]</span>
+    <span>${desc}</span>
+    <span style="color:var(--text-dim)">· ${info.desc}</span>
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModalDirect();
+}
+
+function closeModalDirect() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModalDirect();
+});
+
+// staggered card animation on load
+document.querySelectorAll('.card').forEach((card, i) => {
+  card.style.opacity = '0';
+  card.style.transform = 'translateY(16px)';
+  setTimeout(() => {
+    card.style.transition = 'opacity 0.4s, transform 0.4s';
+    card.style.opacity = '1';
+    card.style.transform = 'translateY(0)';
+  }, i * 40);
+});
+</script>
+</body>
+</html>
