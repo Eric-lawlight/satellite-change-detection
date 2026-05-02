@@ -6,6 +6,7 @@
 ![Dataset](https://img.shields.io/badge/Dataset-LEVIR--CD-orange)
 ![Framework](https://img.shields.io/badge/Framework-BIT__CD-purple)
 ![Environment](https://img.shields.io/badge/Environment-Windows%2011-lightgrey)
+[![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://Eric-lawlight.github.io/satellite-change-detection/demo/demo.html)
 
 ---
 
