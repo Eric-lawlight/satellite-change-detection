@@ -3,741 +3,393 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Satellite Change Detection Demo</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<title>SatelliteVision — Change Detection Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #050a0f;
-    --surface: #0a1520;
-    --surface2: #0f1f30;
-    --border: #1a3a55;
-    --accent: #00d4ff;
-    --accent2: #00ff88;
-    --warn: #ffaa00;
-    --danger: #ff4455;
-    --text: #c8dde8;
-    --text-dim: #5a7a8a;
-    --font-head: 'Rajdhani', sans-serif;
-    --font-body: 'Noto Sans KR', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-  }
+:root {
+  --bg:#04080d; --panel:#080f18; --surface:#0c1824; --surface2:#101e2e;
+  --border:#162840; --border2:#1e3a5a;
+  --accent:#00c8f0; --accent-dim:rgba(0,200,240,0.12);
+  --green:#00e878; --green-dim:rgba(0,232,120,0.1);
+  --warn:#f0a000; --red:#f03050;
+  --text:#aac8dc; --text-bright:#d4eaf8; --text-dim:#3a6080;
+  --font-ui:'JetBrains Mono',monospace;
+  --font-body:'Noto Sans KR',sans-serif;
+  --font-head:'Rajdhani',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);display:flex;flex-direction:column;height:100vh;}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+/* TOPBAR */
+.topbar{height:48px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;z-index:10;}
+.logo{font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;display:flex;align-items:center;gap:8px;}
+.logo-dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.nav-btn{background:transparent;border:none;color:var(--text-dim);font-family:var(--font-ui);font-size:11px;padding:6px 14px;cursor:pointer;letter-spacing:1px;border-radius:3px;transition:all .15s;}
+.nav-btn:hover{color:var(--text);background:var(--surface);}
+.nav-btn.active{color:var(--accent);background:var(--accent-dim);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:16px;font-family:var(--font-ui);font-size:11px;color:var(--text-dim);}
+.status-pill{display:flex;align-items:center;gap:6px;background:var(--green-dim);border:1px solid rgba(0,232,120,0.2);border-radius:20px;padding:3px 10px;color:var(--green);font-size:10px;}
+.status-pill::before{content:'';width:5px;height:5px;background:var(--green);border-radius:50%;animation:blink 2s infinite;}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+/* LAYOUT */
+.workspace{display:grid;grid-template-columns:240px 1fr 280px;flex:1;overflow:hidden;}
 
-  /* animated grid background */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
+/* SIDEBAR */
+.sidebar{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-header{padding:12px 14px;border-bottom:1px solid var(--border);font-family:var(--font-ui);font-size:10px;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;}
+.sidebar-header span{color:var(--accent);font-size:10px;}
+.scene-list{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:4px;}
+.scene-list::-webkit-scrollbar{width:4px;}
+.scene-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 
-  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+.scene-card{background:var(--surface);border:1px solid var(--border);border-radius:3px;cursor:pointer;transition:all .2s;overflow:hidden;user-select:none;}
+.scene-card:hover{border-color:var(--accent);background:var(--surface2);}
+.scene-card.dragging{opacity:.5;transform:scale(.96);}
+.scene-thumb{height:52px;width:100%;overflow:hidden;position:relative;background:#000;}
+.scene-thumb-img{width:100%;height:100%;background-size:400% auto;background-position:0% center;background-repeat:no-repeat;transition:transform .3s;}
+.scene-card:hover .scene-thumb-img{transform:scale(1.04);}
+.type-badge{position:absolute;top:4px;right:4px;font-family:var(--font-ui);font-size:9px;padding:2px 5px;border-radius:2px;font-weight:600;}
+.badge-tp{background:rgba(0,232,120,.85);color:#000;}
+.badge-tn{background:rgba(0,200,240,.85);color:#000;}
+.badge-fp{background:rgba(240,160,0,.85);color:#000;}
+.badge-fn{background:rgba(240,48,80,.85);color:#000;}
+.scene-meta{padding:5px 8px;}
+.scene-id{font-family:var(--font-ui);font-size:10px;color:var(--text-bright);display:block;}
+.scene-date{font-family:var(--font-ui);font-size:9px;color:var(--text-dim);margin-top:1px;}
 
-  /* HEADER */
-  header {
-    padding: 48px 0 32px;
-    border-bottom: 1px solid var(--border);
-    position: relative;
-  }
+/* ANALYSIS CENTER */
+.analysis-area{display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+.drop-zones{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);flex:1;overflow:hidden;}
+.drop-zone{background:var(--panel);display:flex;flex-direction:column;overflow:hidden;position:relative;transition:all .2s;}
+.drop-zone.drag-over{background:var(--surface2);outline:2px dashed var(--accent);outline-offset:-4px;}
+.zone-header{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.zone-label{font-family:var(--font-ui);font-size:11px;letter-spacing:1px;display:flex;align-items:center;gap:8px;}
+.zone-label .tag{background:var(--surface2);border:1px solid var(--border2);padding:2px 8px;border-radius:2px;font-size:10px;color:var(--text-dim);}
+.zone-date{font-family:var(--font-ui);font-size:10px;color:var(--text-dim);}
+.zone-img-wrap{flex:1;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;}
+.zone-placeholder{display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--text-dim);font-family:var(--font-ui);font-size:11px;letter-spacing:1px;text-align:center;}
+.zone-placeholder .icon{font-size:28px;opacity:.4;}
+.drop-hint{font-size:10px;color:var(--text-dim);opacity:.7;}
+.zone-loaded-img{width:100%;height:100%;background-size:400% auto;background-repeat:no-repeat;background-position:0% center;display:none;}
 
-  .header-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(0,212,255,0.08);
-    border: 1px solid rgba(0,212,255,0.2);
-    border-radius: 2px;
-    padding: 4px 12px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--accent);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 16px;
-  }
+/* SCAN */
+.scan-overlay{position:absolute;inset:0;pointer-events:none;z-index:5;display:none;overflow:hidden;}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scanDown 1.4s linear infinite;box-shadow:0 0 12px var(--accent);}
+@keyframes scanDown{from{top:-2px}to{top:100%}}
+.scan-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,200,240,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,240,.06) 1px,transparent 1px);background-size:16px 16px;animation:gridFade 1.4s ease-in-out infinite;}
+@keyframes gridFade{0%,100%{opacity:.3}50%{opacity:1}}
 
-  .header-badge::before {
-    content: '';
-    width: 6px; height: 6px;
-    background: var(--accent);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-  }
+/* BOTTOM BAR */
+.bottom-bar{height:52px;border-top:1px solid var(--border);background:var(--panel);display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;}
+.analyze-btn{background:var(--accent);color:#000;border:none;font-family:var(--font-head);font-size:15px;font-weight:700;letter-spacing:2px;padding:8px 28px;cursor:pointer;border-radius:3px;transition:all .2s;text-transform:uppercase;}
+.analyze-btn:hover:not(:disabled){background:#00e0ff;transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,200,240,.3);}
+.analyze-btn:disabled{background:var(--surface2);color:var(--text-dim);cursor:not-allowed;}
+.clear-btn{background:transparent;border:1px solid var(--border2);color:var(--text-dim);font-family:var(--font-ui);font-size:11px;padding:7px 16px;cursor:pointer;border-radius:3px;transition:all .2s;letter-spacing:1px;}
+.clear-btn:hover{border-color:var(--red);color:var(--red);}
+.bar-hint{font-family:var(--font-ui);font-size:10px;color:var(--text-dim);letter-spacing:1px;}
+.progress-wrap{flex:1;max-width:200px;display:none;}
+.progress-bar{height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);width:0%;transition:width .1s linear;box-shadow:0 0 8px var(--accent);}
+.progress-label{font-family:var(--font-ui);font-size:9px;color:var(--text-dim);margin-top:4px;letter-spacing:1px;}
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.8); }
-  }
+/* RESULTS */
+.results-panel{background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.results-header{padding:12px 14px;border-bottom:1px solid var(--border);font-family:var(--font-ui);font-size:10px;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;}
+.results-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;}
+.results-body::-webkit-scrollbar{width:4px;}
+.results-body::-webkit-scrollbar-thumb{background:var(--border2);}
+.result-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text-dim);font-family:var(--font-ui);font-size:11px;letter-spacing:1px;text-align:center;opacity:.6;}
+.result-empty .icon{font-size:36px;opacity:.3;}
 
-  h1 {
-    font-family: var(--font-head);
-    font-size: clamp(28px, 5vw, 52px);
-    font-weight: 700;
-    letter-spacing: 2px;
-    line-height: 1.1;
-    color: #fff;
-  }
+.result-block{background:var(--surface);border:1px solid var(--border);border-radius:3px;overflow:hidden;opacity:0;transform:translateY(8px);transition:all .4s;}
+.result-block.visible{opacity:1;transform:none;}
+.rb-header{padding:7px 12px;border-bottom:1px solid var(--border);font-family:var(--font-ui);font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;}
+.rb-body{padding:10px 12px;}
 
-  h1 span { color: var(--accent); }
+.verdict{display:flex;align-items:center;gap:10px;padding:12px;}
+.verdict-icon{font-size:26px;}
+.verdict-text{font-family:var(--font-head);font-size:22px;font-weight:700;letter-spacing:1px;}
+.verdict-sub{font-family:var(--font-ui);font-size:10px;color:var(--text-dim);margin-top:2px;letter-spacing:1px;}
+.verdict.change .verdict-text{color:var(--warn);}
+.verdict.no-change .verdict-text{color:var(--green);}
 
-  .subtitle {
-    margin-top: 8px;
-    font-size: 14px;
-    color: var(--text-dim);
-    font-weight: 300;
-    letter-spacing: 1px;
-  }
+.metric-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);}
+.metric-row:last-child{border-bottom:none;}
+.metric-name{font-family:var(--font-ui);font-size:10px;color:var(--text-dim);letter-spacing:1px;}
+.metric-val{font-family:var(--font-ui);font-size:12px;font-weight:600;color:var(--text-bright);}
+.metric-val.green{color:var(--green);}
+.metric-val.accent{color:var(--accent);}
+.mini-bar{height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-top:3px;margin-bottom:4px;}
+.mini-bar-fill{height:100%;border-radius:2px;transition:width 1s ease;}
 
-  /* STATS BAR */
-  .stats-bar {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1px;
-    background: var(--border);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    margin: 28px 0;
-    overflow: hidden;
-  }
+.mask-preview{width:100%;height:110px;overflow:hidden;border-radius:2px;background:#000;position:relative;}
+.mask-img{width:100%;height:100%;background-size:400% auto;background-position:100% center;background-repeat:no-repeat;}
+.mask-label{position:absolute;bottom:6px;right:6px;font-family:var(--font-ui);font-size:9px;background:rgba(0,0,0,.7);color:var(--text-dim);padding:2px 6px;border-radius:2px;letter-spacing:1px;}
 
-  .stat {
-    background: var(--surface);
-    padding: 16px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .stat-label {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--text-dim);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-  }
-
-  .stat-value {
-    font-family: var(--font-head);
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--accent2);
-    letter-spacing: 1px;
-  }
-
-  .stat-value.warn { color: var(--warn); }
-  .stat-value.accent { color: var(--accent); }
-
-  /* FILTER TABS */
-  .filter-section {
-    margin: 32px 0 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .filter-label {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-dim);
-    letter-spacing: 1px;
-  }
-
-  .filter-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 6px 16px;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    letter-spacing: 1px;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.2s;
-    text-transform: uppercase;
-  }
-
-  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-  .filter-btn.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #000;
-    font-weight: 600;
-  }
-
-  .filter-btn.tp.active { background: var(--accent2); border-color: var(--accent2); }
-  .filter-btn.tn.active { background: var(--accent); border-color: var(--accent); }
-  .filter-btn.fp.active { background: var(--warn); border-color: var(--warn); }
-  .filter-btn.fn.active { background: var(--danger); border-color: var(--danger); }
-
-  /* GALLERY */
-  .gallery {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 2px;
-    margin-bottom: 60px;
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.25s;
-    position: relative;
-  }
-
-  .card:hover {
-    border-color: var(--accent);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(0,212,255,0.1);
-    z-index: 2;
-  }
-
-  .card.hidden { display: none; }
-
-  .card-tag {
-    position: absolute;
-    top: 10px; left: 10px;
-    z-index: 3;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    padding: 3px 8px;
-    border-radius: 2px;
-    text-transform: uppercase;
-  }
-
-  .tag-tp { background: rgba(0,255,136,0.9); color: #000; }
-  .tag-tn { background: rgba(0,212,255,0.9); color: #000; }
-  .tag-fp { background: rgba(255,170,0,0.9); color: #000; }
-  .tag-fn { background: rgba(255,68,85,0.9); color: #000; }
-
-  .card img {
-    width: 100%;
-    display: block;
-    transition: transform 0.3s;
-  }
-
-  .card:hover img { transform: scale(1.01); }
-
-  .card-info {
-    padding: 10px 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid var(--border);
-  }
-
-  .card-name {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-dim);
-  }
-
-  .card-desc {
-    font-size: 12px;
-    color: var(--text);
-    font-weight: 300;
-  }
-
-  /* MODAL */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.9);
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-    backdrop-filter: blur(8px);
-  }
-
-  .modal-overlay.open {
-    opacity: 1;
-    pointer-events: all;
-  }
-
-  .modal {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    max-width: 900px;
-    width: 100%;
-    overflow: hidden;
-    transform: scale(0.95);
-    transition: transform 0.3s;
-  }
-
-  .modal-overlay.open .modal { transform: scale(1); }
-
-  .modal img { width: 100%; display: block; }
-
-  .modal-header {
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .modal-title {
-    font-family: var(--font-head);
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: 1px;
-  }
-
-  .modal-close {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text);
-    width: 32px; height: 32px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    font-size: 16px;
-    border-radius: 2px;
-    transition: all 0.2s;
-  }
-
-  .modal-close:hover { border-color: var(--danger); color: var(--danger); }
-
-  .modal-body { padding: 16px 20px; }
-
-  .modal-meta {
-    display: flex; gap: 16px; flex-wrap: wrap;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--text-dim);
-  }
-
-  .modal-meta span { color: var(--text); }
-
-  /* LEGEND */
-  .legend {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-    padding: 12px 16px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-  }
-
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-  }
-
-  .legend-dot {
-    width: 10px; height: 10px;
-    border-radius: 2px;
-  }
-
-  /* PANEL LABELS */
-  .panel-labels {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    background: var(--border);
-    border: 1px solid var(--border);
-    border-bottom: none;
-  }
-
-  .panel-label {
-    background: var(--surface2);
-    padding: 6px;
-    text-align: center;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--text-dim);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
-  /* FOOTER */
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 24px 0;
-    text-align: center;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-dim);
-    letter-spacing: 1px;
-  }
-
-  footer a { color: var(--accent); text-decoration: none; }
-
-  /* COUNT badge */
-  .count-badge {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    padding: 2px 8px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--accent);
-    margin-left: auto;
-  }
+.result-loading{display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px 20px;font-family:var(--font-ui);font-size:11px;color:var(--text-dim);letter-spacing:1px;text-align:center;}
+.spinner{width:28px;height:28px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.log-lines{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:8px 10px;font-family:var(--font-ui);font-size:10px;color:var(--text-dim);line-height:1.9;width:100%;max-height:100px;overflow-y:auto;text-align:left;}
+.log-line{display:flex;gap:8px;}
+.log-line .t{color:var(--accent);opacity:.6;}
+.log-line.ok .msg{color:var(--green);}
 </style>
 </head>
 <body>
 
-<div class="container">
-  <header>
-    <div class="header-badge">BIT · LEVIR-CD · Change Detection</div>
-    <h1>🛰️ Satellite <span>Change</span> Detection</h1>
-    <div class="subtitle">Binary Image Transformer (BIT) · Test Set Visualization · F1 88.84%</div>
-  </header>
-
-  <div class="stats-bar">
-    <div class="stat">
-      <span class="stat-label">Changed F1</span>
-      <span class="stat-value">88.84%</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">IoU</span>
-      <span class="stat-value">79.92%</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">Precision</span>
-      <span class="stat-value accent">89.35%</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">Recall</span>
-      <span class="stat-value accent">88.34%</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">Overall Acc</span>
-      <span class="stat-value">98.87%</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">Dataset</span>
-      <span class="stat-value warn" style="font-size:18px">LEVIR-CD</span>
-    </div>
-  </div>
-
-  <div class="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div> TP — 변화 정확 감지</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> TN — 변화 없음 정확 판별</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--warn)"></div> FP — 오탐 (없는 변화 예측)</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--danger)"></div> FN — 미탐 (있는 변화 놓침)</div>
-    <div class="legend-item" style="margin-left:auto; color: var(--text-dim); font-family: var(--font-mono); font-size:11px">각 이미지: Before(A) / After(B) / GT Mask / Pred Mask</div>
-  </div>
-
-  <div class="filter-section">
-    <span class="filter-label">FILTER:</span>
-    <button class="filter-btn active" onclick="filterCards('all', this)">ALL</button>
-    <button class="filter-btn tp" onclick="filterCards('tp', this)">✅ TP</button>
-    <button class="filter-btn tn" onclick="filterCards('tn', this)">🔵 TN</button>
-    <button class="filter-btn fp" onclick="filterCards('fp', this)">⚠️ FP</button>
-    <button class="filter-btn fn" onclick="filterCards('fn', this)">❌ FN</button>
-    <span class="count-badge" id="count">20 samples</span>
-  </div>
-
-  <div class="gallery" id="gallery">
-
-    <div class="card" data-type="tp" onclick="openModal(this)">
-      <span class="card-tag tag-tp">TP</span>
-      <img src="test_126_512_0_vis.jpg" alt="test_126">
-      <div class="card-info">
-        <span class="card-name">test_126_512_0</span>
-        <span class="card-desc">단일 건물 신축 정확 감지</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="fp" onclick="openModal(this)">
-      <span class="card-tag tag-fp">FP</span>
-      <img src="test_2_768_512_vis.jpg" alt="test_2">
-      <div class="card-info">
-        <span class="card-name">test_2_768_512</span>
-        <span class="card-desc">미세 오탐 — 클래스 불균형 FP</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="fn" onclick="openModal(this)">
-      <span class="card-tag tag-fn">FN</span>
-      <img src="test_16_512_768_vis.jpg" alt="test_16">
-      <div class="card-info">
-        <span class="card-name">test_16_512_768</span>
-        <span class="card-desc">미탐 — 건물 변화 놓침</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tp" onclick="openModal(this)">
-      <span class="card-tag tag-tp">TP</span>
-      <img src="test_34_768_768_vis.jpg" alt="test_34">
-      <div class="card-info">
-        <span class="card-name">test_34_768_768</span>
-        <span class="card-desc">대규모 신축 단지 전체 감지</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tp" onclick="openModal(this)">
-      <span class="card-tag tag-tp">TP</span>
-      <img src="test_35_256_512_vis.jpg" alt="test_35">
-      <div class="card-info">
-        <span class="card-name">test_35_256_512</span>
-        <span class="card-desc">복수 건물 패턴 정확 감지</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tn" onclick="openModal(this)">
-      <span class="card-tag tag-tn">TN</span>
-      <img src="test_36_0_512_vis.jpg" alt="test_36">
-      <div class="card-info">
-        <span class="card-name">test_36_0_512</span>
-        <span class="card-desc">변화 없음 정확 판별</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="fn" onclick="openModal(this)">
-      <span class="card-tag tag-fn">FN</span>
-      <img src="test_38_512_0_vis.jpg" alt="test_38">
-      <div class="card-info">
-        <span class="card-name">test_38_512_0</span>
-        <span class="card-desc">일부 변화 미탐</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tn" onclick="openModal(this)">
-      <span class="card-tag tag-tn">TN</span>
-      <img src="test_40_512_768_vis.jpg" alt="test_40">
-      <div class="card-info">
-        <span class="card-name">test_40_512_768</span>
-        <span class="card-desc">변화 없음 정확 판별</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tn" onclick="openModal(this)">
-      <span class="card-tag tag-tn">TN</span>
-      <img src="test_48_256_512_vis.jpg" alt="test_48">
-      <div class="card-info">
-        <span class="card-name">test_48_256_512</span>
-        <span class="card-desc">도시 구역 변화 없음</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tp" onclick="openModal(this)">
-      <span class="card-tag tag-tp">TP</span>
-      <img src="test_49_0_768_vis.jpg" alt="test_49">
-      <div class="card-info">
-        <span class="card-name">test_49_0_768</span>
-        <span class="card-desc">신규 건물군 감지</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tn" onclick="openModal(this)">
-      <span class="card-tag tag-tn">TN</span>
-      <img src="test_81_256_512_vis.jpg" alt="test_81">
-      <div class="card-info">
-        <span class="card-name">test_81_256_512</span>
-        <span class="card-desc">산림 지역 변화 없음</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tn" onclick="openModal(this)">
-      <span class="card-tag tag-tn">TN</span>
-      <img src="test_82_0_0_vis.jpg" alt="test_82">
-      <div class="card-info">
-        <span class="card-name">test_82_0_0</span>
-        <span class="card-desc">도로·산림 변화 없음</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tn" onclick="openModal(this)">
-      <span class="card-tag tag-tn">TN</span>
-      <img src="test_88_768_768_vis.jpg" alt="test_88">
-      <div class="card-info">
-        <span class="card-name">test_88_768_768</span>
-        <span class="card-desc">초지 변화 없음</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tn" onclick="openModal(this)">
-      <span class="card-tag tag-tn">TN</span>
-      <img src="test_106_256_512_vis.jpg" alt="test_106a">
-      <div class="card-info">
-        <span class="card-name">test_106_256_512</span>
-        <span class="card-desc">도로 구역 변화 없음</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tn" onclick="openModal(this)">
-      <span class="card-tag tag-tn">TN</span>
-      <img src="test_106_768_0_vis.jpg" alt="test_106b">
-      <div class="card-info">
-        <span class="card-name">test_106_768_0</span>
-        <span class="card-desc">농지 변화 없음</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tp" onclick="openModal(this)">
-      <span class="card-tag tag-tp">TP</span>
-      <img src="test_107_512_512_vis.jpg" alt="test_107">
-      <div class="card-info">
-        <span class="card-name">test_107_512_512</span>
-        <span class="card-desc">단일 건물 신축 정확 감지</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tn" onclick="openModal(this)">
-      <span class="card-tag tag-tn">TN</span>
-      <img src="test_108_0_512_vis.jpg" alt="test_108">
-      <div class="card-info">
-        <span class="card-name">test_108_0_512</span>
-        <span class="card-desc">산림 지역 변화 없음</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tn" onclick="openModal(this)">
-      <span class="card-tag tag-tn">TN</span>
-      <img src="test_120_256_0_vis.jpg" alt="test_120">
-      <div class="card-info">
-        <span class="card-name">test_120_256_0</span>
-        <span class="card-desc">농경지 변화 없음</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tn" onclick="openModal(this)">
-      <span class="card-tag tag-tn">TN</span>
-      <img src="test_121_768_768_vis.jpg" alt="test_121">
-      <div class="card-info">
-        <span class="card-name">test_121_768_768</span>
-        <span class="card-desc">농경지 변화 없음</span>
-      </div>
-    </div>
-
-    <div class="card" data-type="tn" onclick="openModal(this)">
-      <span class="card-tag tag-tn">TN</span>
-      <img src="test_124_0_768_vis.jpg" alt="test_124">
-      <div class="card-info">
-        <span class="card-name">test_124_0_768</span>
-        <span class="card-desc">초지 변화 없음</span>
-      </div>
-    </div>
-
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>STELLARVISION</div>
+  <button class="nav-btn active">CHANGE DETECTION</button>
+  <button class="nav-btn">ARCHIVE</button>
+  <button class="nav-btn">ANALYTICS</button>
+  <div class="topbar-right">
+    <span>MODEL: BIT-Transformer</span>
+    <span>F1: 88.84%</span>
+    <div class="status-pill">SYSTEM ONLINE</div>
   </div>
 </div>
 
-<!-- MODAL -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
-  <div class="modal" id="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="modalTitle">Sample</span>
-      <button class="modal-close" onclick="closeModalDirect()">✕</button>
-    </div>
-    <div class="panel-labels">
-      <div class="panel-label">Before (A)</div>
-      <div class="panel-label">After (B)</div>
-      <div class="panel-label">GT Mask</div>
-      <div class="panel-label">Pred Mask</div>
-    </div>
-    <img id="modalImg" src="" alt="">
-    <div class="modal-body">
-      <div class="modal-meta" id="modalMeta"></div>
-    </div>
-  </div>
-</div>
+<div class="workspace">
 
-<footer>
-  <div class="container">
-    <a href="https://github.com/Eric-lawlight/satellite-change-detection" target="_blank">GitHub Repository</a>
-    &nbsp;·&nbsp; BIT: Remote Sensing Image Change Detection with Transformers (IEEE TGRS 2021)
-    &nbsp;·&nbsp; Dataset: LEVIR-CD
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">IMAGERY ARCHIVE <span id="archiveCount">10</span></div>
+    <div class="scene-list" id="sceneList"></div>
   </div>
-</footer>
+
+  <!-- CENTER -->
+  <div class="analysis-area">
+    <div class="drop-zones">
+      <div class="drop-zone" id="zoneA" ondragover="onDragOver(event,'A')" ondragleave="onDragLeave(event,'A')" ondrop="onDrop(event,'A')">
+        <div class="zone-header">
+          <div class="zone-label"><span class="tag">T1</span> BEFORE IMAGE</div>
+          <span class="zone-date" id="dateA">—</span>
+        </div>
+        <div class="zone-img-wrap">
+          <div class="zone-placeholder" id="placeholderA"><div class="icon">🛰️</div><div>이미지를 드래그하여 배치</div><div class="drop-hint">좌측 아카이브에서 선택</div></div>
+          <div class="zone-loaded-img" id="imgA"></div>
+          <div class="scan-overlay" id="scanA"><div class="scan-grid"></div><div class="scan-line"></div></div>
+        </div>
+      </div>
+      <div class="drop-zone" id="zoneB" ondragover="onDragOver(event,'B')" ondragleave="onDragLeave(event,'B')" ondrop="onDrop(event,'B')">
+        <div class="zone-header">
+          <div class="zone-label"><span class="tag" style="border-color:rgba(0,232,120,.3);color:var(--green)">T2</span> AFTER IMAGE</div>
+          <span class="zone-date" id="dateB">—</span>
+        </div>
+        <div class="zone-img-wrap">
+          <div class="zone-placeholder" id="placeholderB"><div class="icon">📡</div><div>이미지를 드래그하여 배치</div><div class="drop-hint">좌측 아카이브에서 선택</div></div>
+          <div class="zone-loaded-img" id="imgB"></div>
+          <div class="scan-overlay" id="scanB"><div class="scan-grid"></div><div class="scan-line"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <button class="analyze-btn" id="analyzeBtn" disabled onclick="runAnalysis()">▶ ANALYZE</button>
+      <button class="clear-btn" onclick="clearAll()">CLEAR</button>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel">INITIALIZING...</div>
+      </div>
+      <span class="bar-hint" id="barHint">좌측에서 이미지를 Before / After 칸에 드래그하세요</span>
+    </div>
+  </div>
+
+  <!-- RIGHT RESULTS -->
+  <div class="results-panel">
+    <div class="results-header">ANALYSIS RESULTS <span id="resultStatus" style="color:var(--text-dim)">READY</span></div>
+    <div class="results-body" id="resultsBody">
+      <div class="result-empty" id="resultEmpty">
+        <div class="icon">📊</div>
+        <div>분석 결과가 여기에 표시됩니다</div>
+        <div style="font-size:9px;margin-top:4px">이미지 2장을 배치하고<br>ANALYZE를 실행하세요</div>
+      </div>
+    </div>
+  </div>
+
+</div>
 
 <script>
-const typeInfo = {
-  tp: { label: 'True Positive', color: '#00ff88', desc: '변화 픽셀을 정확히 감지한 케이스' },
-  tn: { label: 'True Negative', color: '#00d4ff', desc: '변화 없음을 정확히 판별한 케이스' },
-  fp: { label: 'False Positive', color: '#ffaa00', desc: '변화가 없는데 있다고 예측한 오탐 케이스' },
-  fn: { label: 'False Negative', color: '#ff4455', desc: '변화가 있는데 놓친 미탐 케이스' },
-};
+const scenes = [
+  {id:'SCN-126',vis:'test_126_512_0_vis.jpg',type:'tp',date_a:'2016-03-14',date_b:'2019-08-22',location:'Austin, TX — Sector 126',change:true,verdict:'CHANGE DETECTED',f1:94.1,iou:88.8,precision:91.3,recall:92.6,change_pct:3.2,buildings:1,area:'0.8 ha',desc:'단일 건물 신축 정확 감지'},
+  {id:'SCN-034',vis:'test_34_768_768_vis.jpg',type:'tp',date_a:'2015-11-02',date_b:'2018-04-15',location:'Phoenix, AZ — Grid 034',change:true,verdict:'CHANGE DETECTED',f1:91.2,iou:83.9,precision:88.7,recall:93.8,change_pct:31.4,buildings:12,area:'7.4 ha',desc:'대규모 신축 단지 전체 감지'},
+  {id:'SCN-035',vis:'test_35_256_512_vis.jpg',type:'tp',date_a:'2016-06-18',date_b:'2019-01-30',location:'Houston, TX — Block 035',change:true,verdict:'CHANGE DETECTED',f1:89.4,iou:80.9,precision:87.2,recall:91.6,change_pct:22.7,buildings:8,area:'5.1 ha',desc:'복수 건물 패턴 정확 감지'},
+  {id:'SCN-049',vis:'test_49_0_768_vis.jpg',type:'tp',date_a:'2017-02-11',date_b:'2020-07-04',location:'Dallas, TX — Zone 049',change:true,verdict:'CHANGE DETECTED',f1:88.9,iou:80.1,precision:86.4,recall:91.5,change_pct:18.3,buildings:6,area:'4.2 ha',desc:'신규 건물군 감지'},
+  {id:'SCN-107',vis:'test_107_512_512_vis.jpg',type:'tp',date_a:'2016-09-03',date_b:'2018-12-19',location:'San Antonio, TX — Ref 107',change:true,verdict:'CHANGE DETECTED',f1:90.5,iou:82.6,precision:88.1,recall:93.0,change_pct:4.8,buildings:1,area:'1.1 ha',desc:'창고형 건물 신축 감지'},
+  {id:'SCN-082',vis:'test_82_0_0_vis.jpg',type:'tn',date_a:'2016-01-20',date_b:'2018-10-08',location:'Austin, TX — Sector 082',change:false,verdict:'NO CHANGE',f1:null,iou:null,precision:null,recall:null,change_pct:0.0,buildings:0,area:'0 ha',desc:'도로·산림 변화 없음'},
+  {id:'SCN-088',vis:'test_88_768_768_vis.jpg',type:'tn',date_a:'2015-08-14',date_b:'2018-03-22',location:'Waco, TX — Plot 088',change:false,verdict:'NO CHANGE',f1:null,iou:null,precision:null,recall:null,change_pct:0.0,buildings:0,area:'0 ha',desc:'초지 변화 없음'},
+  {id:'SCN-002',vis:'test_2_768_512_vis.jpg',type:'fp',date_a:'2016-04-07',date_b:'2019-11-14',location:'Fort Worth, TX — Ref 002',change:false,verdict:'CHANGE DETECTED',f1:null,iou:null,precision:null,recall:null,change_pct:0.1,buildings:0,area:'0.02 ha',desc:'미세 오탐 (FP)'},
+  {id:'SCN-016',vis:'test_16_512_768_vis.jpg',type:'fn',date_a:'2015-12-01',date_b:'2018-06-30',location:'Arlington, TX — Block 016',change:true,verdict:'NO CHANGE',f1:null,iou:null,precision:null,recall:null,change_pct:2.1,buildings:2,area:'0.9 ha',desc:'미탐 케이스 (FN)'},
+  {id:'SCN-038',vis:'test_38_512_0_vis.jpg',type:'fn',date_a:'2016-07-22',date_b:'2019-03-15',location:'Plano, TX — Zone 038',change:true,verdict:'NO CHANGE',f1:null,iou:null,precision:null,recall:null,change_pct:1.4,buildings:1,area:'0.5 ha',desc:'부분 미탐 (FN)'},
+];
 
-function filterCards(type, btn) {
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+const badgeClass={tp:'badge-tp',tn:'badge-tn',fp:'badge-fp',fn:'badge-fn'};
+const badgeLabel={tp:'TP',tn:'TN',fp:'FP',fn:'FN'};
+let loadedA=null,loadedB=null,analyzing=false;
 
-  const cards = document.querySelectorAll('.card');
-  let count = 0;
-  cards.forEach(card => {
-    if (type === 'all' || card.dataset.type === type) {
-      card.classList.remove('hidden');
-      count++;
-    } else {
-      card.classList.add('hidden');
-    }
+function buildSceneList(){
+  const list=document.getElementById('sceneList');
+  scenes.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.className='scene-card';card.draggable=true;card.dataset.idx=i;
+    card.innerHTML=`<div class="scene-thumb"><div class="scene-thumb-img" style="background-image:url('${s.vis}')"></div><span class="type-badge ${badgeClass[s.type]}">${badgeLabel[s.type]}</span></div><div class="scene-meta"><span class="scene-id">${s.id}</span><span class="scene-date">${s.date_a} → ${s.date_b}</span></div>`;
+    card.addEventListener('dragstart',e=>{e.dataTransfer.setData('sceneIdx',i);card.classList.add('dragging');});
+    card.addEventListener('dragend',()=>card.classList.remove('dragging'));
+    card.addEventListener('click',()=>autoPlace(i));
+    list.appendChild(card);
   });
-  document.getElementById('count').textContent = count + ' samples';
 }
 
-function openModal(card) {
-  const img = card.querySelector('img');
-  const type = card.dataset.type;
-  const name = card.querySelector('.card-name').textContent;
-  const desc = card.querySelector('.card-desc').textContent;
-  const info = typeInfo[type];
+function autoPlace(idx){
+  if(!loadedA)dropScene(idx,'A');
+  else if(!loadedB&&idx!==loadedA.idx)dropScene(idx,'B');
+}
 
-  document.getElementById('modalImg').src = img.src;
-  document.getElementById('modalTitle').textContent = name;
-  document.getElementById('modalMeta').innerHTML = `
-    <span style="color:${info.color}">[${info.label}]</span>
-    <span>${desc}</span>
-    <span style="color:var(--text-dim)">· ${info.desc}</span>
+function onDragOver(e,slot){e.preventDefault();document.getElementById('zone'+slot).classList.add('drag-over');}
+function onDragLeave(e,slot){document.getElementById('zone'+slot).classList.remove('drag-over');}
+function onDrop(e,slot){e.preventDefault();document.getElementById('zone'+slot).classList.remove('drag-over');const idx=parseInt(e.dataTransfer.getData('sceneIdx'));dropScene(idx,slot);}
+
+function dropScene(idx,slot){
+  const s=scenes[idx];
+  if(slot==='A'){
+    loadedA={idx,...s};
+    const el=document.getElementById('imgA');
+    el.style.backgroundImage=`url('${s.vis}')`;el.style.backgroundPosition='0% center';el.style.display='block';
+    document.getElementById('placeholderA').style.display='none';
+    document.getElementById('dateA').textContent=s.date_a;
+  }else{
+    loadedB={idx,...s};
+    const el=document.getElementById('imgB');
+    el.style.backgroundImage=`url('${s.vis}')`;el.style.backgroundPosition='33.33% center';el.style.display='block';
+    document.getElementById('placeholderB').style.display='none';
+    document.getElementById('dateB').textContent=s.date_b;
+  }
+  updateBtn();
+}
+
+function updateBtn(){
+  const btn=document.getElementById('analyzeBtn');
+  const hint=document.getElementById('barHint');
+  if(loadedA&&loadedB){btn.disabled=false;hint.textContent=`${loadedA.id} (T1) ↔ ${loadedB.id} (T2) — 분석 준비 완료`;}
+  else if(loadedA){btn.disabled=true;hint.textContent='After 이미지를 배치하세요';}
+  else{btn.disabled=true;hint.textContent='좌측에서 이미지를 Before / After 칸에 드래그하세요';}
+}
+
+function clearAll(){
+  loadedA=null;loadedB=null;
+  ['A','B'].forEach(s=>{
+    document.getElementById('img'+s).style.display='none';
+    document.getElementById('placeholder'+s).style.display='flex';
+    document.getElementById('date'+s).textContent='—';
+    document.getElementById('scan'+s).style.display='none';
+  });
+  document.getElementById('resultsBody').innerHTML=`<div class="result-empty"><div class="icon">📊</div><div>분석 결과가 여기에 표시됩니다</div><div style="font-size:9px;margin-top:4px">이미지 2장을 배치하고<br>ANALYZE를 실행하세요</div></div>`;
+  document.getElementById('resultStatus').textContent='READY';
+  document.getElementById('resultStatus').style.color='var(--text-dim)';
+  updateBtn();
+}
+
+function runAnalysis(){
+  if(analyzing||!loadedA||!loadedB)return;
+  analyzing=true;
+  document.getElementById('analyzeBtn').disabled=true;
+  ['A','B'].forEach(s=>document.getElementById('scan'+s).style.display='block');
+  const pw=document.getElementById('progressWrap');pw.style.display='block';
+  document.getElementById('barHint').style.display='none';
+  document.getElementById('resultStatus').textContent='ANALYZING...';
+  document.getElementById('resultStatus').style.color='var(--accent)';
+  document.getElementById('resultsBody').innerHTML=`<div class="result-loading" id="rLoad" style="display:flex"><div class="spinner"></div><div id="lMsg">초기화 중...</div><div class="log-lines" id="logLines"></div></div>`;
+
+  const steps=[
+    [200,15,'LOADING...','이미지 로드 완료','ok'],
+    [600,30,'PREPROCESSING...','정규화 · 패딩 처리','ok'],
+    [1100,52,'INFERENCE...','ResNet-18 인코더 실행 중',''],
+    [1600,70,'TRANSFORMER...','Self-Attention 계산 중',''],
+    [2000,85,'DECODING...','MLP 디코더 출력','ok'],
+    [2400,95,'POST-PROCESS...','후처리 완료','ok'],
+    [2800,100,'COMPLETE','분석 완료 ✓','ok'],
+  ];
+  steps.forEach(([t,pct,label,log,cls])=>{
+    setTimeout(()=>{
+      document.getElementById('progressFill').style.width=pct+'%';
+      document.getElementById('progressLabel').textContent=label;
+      const ll=document.getElementById('logLines');
+      if(ll){const ts=new Date().toTimeString().slice(0,8);ll.innerHTML+=`<div class="log-line ${cls}"><span class="t">[${ts}]</span><span class="msg">${log}</span></div>`;ll.scrollTop=ll.scrollHeight;}
+      const lm=document.getElementById('lMsg');if(lm)lm.textContent=label;
+    },t);
+  });
+
+  setTimeout(()=>{
+    ['A','B'].forEach(s=>document.getElementById('scan'+s).style.display='none');
+    pw.style.display='none';document.getElementById('barHint').style.display='';
+    showResults(loadedB);
+    analyzing=false;
+    document.getElementById('analyzeBtn').disabled=false;
+    updateBtn();
+  },3100);
+}
+
+function showResults(scene){
+  document.getElementById('resultStatus').textContent='COMPLETE';
+  document.getElementById('resultStatus').style.color='var(--green)';
+  const isChange=scene.change;
+  const typeLabels={tp:'정확 감지 (TP)',tn:'정확 판별 (TN)',fp:'오탐 (FP)',fn:'미탐 (FN)'};
+
+  let metricsHtml='';
+  if(scene.f1){
+    metricsHtml=`<div class="result-block"><div class="rb-header">DETECTION METRICS</div><div class="rb-body">
+      ${mbar('F1-Score',scene.f1.toFixed(1)+'%','green',scene.f1,'#00e878')}
+      ${mbar('IoU',scene.iou.toFixed(1)+'%','accent',scene.iou,'#00c8f0')}
+      ${mrow('Precision',scene.precision.toFixed(1)+'%')}
+      ${mrow('Recall',scene.recall.toFixed(1)+'%')}
+    </div></div>`;
+  }
+
+  document.getElementById('resultsBody').innerHTML=`
+    <div class="result-block">
+      <div class="rb-header">VERDICT <span class="${badgeClass[scene.type]}" style="font-family:var(--font-ui);font-size:9px;padding:2px 6px;border-radius:2px">${typeLabels[scene.type]}</span></div>
+      <div class="verdict ${isChange?'change':'no-change'}">
+        <span class="verdict-icon">${isChange?'⚠️':'✅'}</span>
+        <div><div class="verdict-text">${scene.verdict}</div><div class="verdict-sub">${scene.location}</div></div>
+      </div>
+    </div>
+    <div class="result-block">
+      <div class="rb-header">PREDICTION MASK</div>
+      <div class="rb-body" style="padding:8px">
+        <div class="mask-preview"><div class="mask-img" style="background-image:url('${scene.vis}')"></div><span class="mask-label">MODEL OUTPUT</span></div>
+      </div>
+    </div>
+    <div class="result-block">
+      <div class="rb-header">CHANGE STATISTICS</div>
+      <div class="rb-body">
+        ${mrow('CHANGED AREA',scene.area)}
+        ${mrow('CHANGE RATIO',scene.change_pct.toFixed(1)+'%')}
+        ${mrow('STRUCTURES',scene.buildings+' detected')}
+        ${mrow('T1 DATE',loadedA.date_a)}
+        ${mrow('T2 DATE',loadedB.date_b)}
+        ${mrow('TIME DELTA',dateDiff(loadedA.date_a,loadedB.date_b))}
+      </div>
+    </div>
+    ${metricsHtml}
+    <div class="result-block">
+      <div class="rb-header">MODEL INFO</div>
+      <div class="rb-body">
+        ${mrow('MODEL','BIT-Transformer')}
+        ${mrow('BACKBONE','ResNet-18')}
+        ${mrow('DATASET','LEVIR-CD')}
+        ${mrow('OVERALL F1','88.84%')}
+      </div>
+    </div>
   `;
-  document.getElementById('modalOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  setTimeout(()=>document.querySelectorAll('.result-block').forEach((b,i)=>setTimeout(()=>b.classList.add('visible'),i*80)),50);
 }
 
-function closeModal(e) {
-  if (e.target === document.getElementById('modalOverlay')) closeModalDirect();
-}
+function mrow(n,v){return`<div class="metric-row"><span class="metric-name">${n}</span><span class="metric-val" style="font-size:10px">${v}</span></div>`;}
+function mbar(n,v,cls,pct,color){return`<div class="metric-row"><span class="metric-name">${n}</span><span class="metric-val ${cls}">${v}</span></div><div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;background:${color}"></div></div>`;}
+function dateDiff(a,b){const d=Math.abs(new Date(b)-new Date(a));const m=Math.round(d/(1000*60*60*24*30));return m>=12?Math.round(m/12)+' years':m+' months';}
 
-function closeModalDirect() {
-  document.getElementById('modalOverlay').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModalDirect();
-});
-
-// staggered card animation on load
-document.querySelectorAll('.card').forEach((card, i) => {
-  card.style.opacity = '0';
-  card.style.transform = 'translateY(16px)';
-  setTimeout(() => {
-    card.style.transition = 'opacity 0.4s, transform 0.4s';
-    card.style.opacity = '1';
-    card.style.transform = 'translateY(0)';
-  }, i * 40);
-});
+buildSceneList();
 </script>
 </body>
 </html>
