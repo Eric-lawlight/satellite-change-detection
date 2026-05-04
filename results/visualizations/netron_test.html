@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Netron Embed Test</title>
+<style>
+  body {
+    font-family: sans-serif;
+    background: #1a1a2e;
+    color: #fff;
+    padding: 30px;
+  }
+  h2 { margin-bottom: 10px; color: #93C5FD; }
+  .status {
+    margin-bottom: 16px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #0f3460;
+    border-left: 4px solid #58A6FF;
+  }
+  iframe {
+    width: 100%;
+    height: 700px;
+    border: 2px solid #334155;
+    border-radius: 10px;
+    background: #fff;
+  }
+  .url-box {
+    margin-top: 16px;
+    padding: 10px;
+    background: #0f172a;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #94a3b8;
+    word-break: break-all;
+  }
+</style>
+</head>
+<body>
+
+<h2>🧠 Netron ONNX Viewer — Embed Test</h2>
+
+<div class="status">
+  ✅ 아래 iframe이 로딩되면 성공 &nbsp;|&nbsp;
+  ❌ 빈 화면이면 CORS 또는 URL 문제
+</div>
+
+<!-- 테스트 1: GitHub Pages URL로 시도 -->
+<h3 style="color:#a5f3fc; margin-bottom:8px;">Test 1 — GitHub Pages URL</h3>
+<iframe
+  id="netron-frame"
+  src="https://netron.app/?url=https://Eric-lawlight.github.io/satellite-change-detection/results/visualizations/BIT_LEVIR.onnx"
+  allow="cross-origin-isolated">
+</iframe>
+
+<div class="url-box">
+  📎 시도한 URL:<br>
+  https://netron.app/?url=https://Eric-lawlight.github.io/satellite-change-detection/results/visualizations/BIT_LEVIR.onnx
+</div>
+
+<br><br>
+
+<!-- 테스트 2: Raw GitHub URL로 시도 -->
+<h3 style="color:#a5f3fc; margin-bottom:8px;">Test 2 — Raw GitHub URL</h3>
+<iframe
+  src="https://netron.app/?url=https://raw.githubusercontent.com/Eric-lawlight/satellite-change-detection/main/results/visualizations/BIT_LEVIR.onnx"
+  allow="cross-origin-isolated">
+</iframe>
+
+<div class="url-box">
+  📎 시도한 URL:<br>
+  https://netron.app/?url=https://raw.githubusercontent.com/Eric-lawlight/satellite-change-detection/main/results/visualizations/BIT_LEVIR.onnx
+</div>
+
+<br>
+<div class="status" style="border-left-color: #f59e0b;">
+  💡 Test 1, 2 둘 다 안 되면 알려주세요 — 로컬 파일 방식으로 바꿔드릴게요.
+</div>
+
+</body>
+</html>
